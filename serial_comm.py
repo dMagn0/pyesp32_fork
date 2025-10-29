@@ -54,10 +54,10 @@ def parse_message(msg):
             return None
 
         return {
-            'operation': msg[0],
-            'type': msg[1],
-            'address': int(msg[2:4]),
-            'value': int(msg[4:11])
+            "operation": msg[0],
+            "type": msg[1],
+            "address": int(msg[2:4]),
+            "value": int(msg[4:11]),
         }
     except (ValueError, IndexError):
         return None
@@ -67,7 +67,11 @@ def read_serial(ser):
     """Thread function to continuously read from serial port."""
     while True:
         if ser.in_waiting > 0:
-            data = ser.readline().decode("utf-8").strip()
+            try:
+                data = ser.readline().decode("utf-8").strip()
+            except Exception as ex:
+                print(ex)
+                continue
 
             # Parse the message
             parsed = parse_message(data)
@@ -75,15 +79,15 @@ def read_serial(ser):
                 print(f"Address: {parsed['address']}, Value: {parsed['value']}")
 
                 # Check if it's a read response from GPIO4
-                if parsed['operation'] == 'r' and parsed['address'] == GPIO_READ_PIN:
-                    value = parsed['value']
+                if parsed["operation"] == "r" and parsed["address"] == GPIO_READ_PIN:
+                    value = parsed["value"]
 
                     # Check threshold
                     if value >= THRESHOLD:
-                        write_msg = build_message('w', 'd', GPIO_WRITE_PIN, 1)
+                        write_msg = build_message("w", "d", GPIO_WRITE_PIN, 1)
                         ser.write(write_msg.encode("utf-8"))
                     else:
-                        write_msg = build_message('w', 'd', GPIO_WRITE_PIN, 0)
+                        write_msg = build_message("w", "d", GPIO_WRITE_PIN, 0)
                         ser.write(write_msg.encode("utf-8"))
 
 
@@ -93,7 +97,7 @@ def send_periodic_read(ser):
 
     current_time = time.time()
     if current_time - last_read_time >= READ_INTERVAL:
-        read_msg = build_message('r', 'a', GPIO_READ_PIN, 0)
+        read_msg = build_message("r", "a", GPIO_READ_PIN, 0)
         ser.write(read_msg.encode("utf-8"))
         last_read_time = current_time
 
