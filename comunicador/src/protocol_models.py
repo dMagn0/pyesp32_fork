@@ -30,6 +30,7 @@ class ComunicadorSerial():
     _com_lock:threading.Lock
 
     _read_timeout = 1 #em segundos
+    _read_retrys = 3#vezes que o comunicador reenvia requisição de leitura
 
     def __init__(self, port, baud_rate):
         self._serial = serial.Serial(port, baud_rate, timeout=1)
@@ -62,7 +63,7 @@ class ComunicadorSerial():
         pass
     
     @staticmethod
-    def build_message(operation, pin_type, address, value) -> str:
+    def build_message(operation, pin_type, address, value = "") -> str:
         """
         Build a message according to the protocol.
 
@@ -75,6 +76,11 @@ class ComunicadorSerial():
         Returns:
             Formatted message string
         """
+        if type(operation) == OperationType:
+            operation = operation.value
+        if type(pin_type) == PinType:
+            pin_type =pin_type.value
+
         return f"{operation}{pin_type}{address:02d}{value:07d}"
     
     def _read_serial(self) -> list:
@@ -102,25 +108,20 @@ class ComunicadorSerial():
             except Exception as e:
                 print(f"Erro de leitura: {e.args}")
                 return saida
-            saida.append(ComunicadorSerial.parse_message(data))
+            saida.append(data)
             
         return saida
 
-    def _send_message(self, operacao:OperationType, pin_type:PinType, address,value=0) -> bool:
+    def _send_message(self, mensagem) -> bool:
         """
         Faz escrita da mensagem na porta serial
 
         Args:
             mensagem: string, a mensagem a ser escrita para a porta serial do ESP-32
-            operacao: OperationType, a operacao a ser realizada
-            pin_type: PinType
-            address: string, valor em decimal do endereço dsa mensagem
-            value: string, valor de escrita
-
+            
         Returns:
             bool: retorna a sucesso dsa leitura
         """
-        mensagem = ComunicadorSerial.build_message(operacao.value, pin_type.value,address,value)
 
         try:
             self._serial.write(mensagem.encode('utf-8'))
@@ -134,30 +135,32 @@ class ComunicadorSerial():
         leitura = []
         retorno = {}
 
-        start = time.time()
-        ser_waiting = self._serial.in_waiting
-
-        with self._com_lock:
-            while ser_waiting == self._serial.in_waiting:
-                if time.time() - start > ComunicadorSerial._read_timeout:
-                    print("Erro de leitura: timeout")
-                    return retorno
-                self._send_message(OperationType.READ,pin_type,address)
-                time.sleep(0.05) 
-
-            leitura = self._read_serial()
+        for i in range(0, ComunicadorSerial._read_retrys):
+            with self._com_lock:
+                if self._serial.in_waiting:
+                    _ = self._read_serial()
+                self._send_message(ComunicadorSerial.build_message(OperationType.READ,pin_type,address))    
             
-        for i in leitura:
-            if i["operation"] == OperationType.READ.value and i["address"] == address:
-                retorno = i
-                pass
-            pass
-        if len(retorno) == 0:
-            print("Erro de leitura: resposta nao encontrada")
-        return retorno
+            with self._com_lock:
+                leitura = self._read_serial()
 
+            for i in leitura:
+                msg = ComunicadorSerial.parse_message(i)
+                if msg["operation"] == OperationType.READ.value and msg["address"] == address:
+                    retorno = msg
+                    pass
+                pass
+
+            if len(retorno) != 0:
+                return retorno
+                break
+            pass
+
+        print("Erro de leitura: resposta nao encontrada")
+        return {}
+    
     def write_pin(self, pin_type:PinType, address,value):
         with self._com_lock:
-            self._send_message(OperationType.WRITE,pin_type,address,value)
+            self._send_message( ComunicadorSerial.build_message(OperationType.WRITE, pin_type,address,value) )
         pass
     pass
