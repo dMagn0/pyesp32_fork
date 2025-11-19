@@ -4,11 +4,13 @@
 #################################################################################################
 
 Comentarios:
+
     Os codigos do python que devem ser rodados na maquina estão na pasta "comunicador"
 
     A biblioteca "serial" e "pyserial" entram em conflito, por isso eu retirei "serial" dos requirments
 
 Afazeres:
+
     1 - Fazer monitorar o ESP 
         i - Ler valores de corrente, tensão, temperatura, 
 
@@ -22,13 +24,16 @@ Afazeres:
         i - Confirmar se o algoritmo funciona em computadores que nunca rodaram o código 
 
 Sendo feito:
+
     1 - Documentação 
 
     2 - 
 
 Concluído:
+
     1 - Protocolo de comunicação
 
 
 Observações:
+
     1 - Bibliotecas por conta do grupo do ESP
