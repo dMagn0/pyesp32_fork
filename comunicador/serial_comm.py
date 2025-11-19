@@ -3,6 +3,7 @@ import sys
 import glob
 import time
 import threading
+from time import sleep
 from src.protocol_models import *
 from src.port_detect import *
 
@@ -24,6 +25,24 @@ if __name__ == "__main__":
         porta = serial_p[0]
 
     com = ComunicadorSerial(porta,BAUD_RATE)
+
+    while(1):
+        op = input("Digite a operacao (leitura = 1, escrita = 2): ")
+        try:
+            if op == "1":
+                pin_t = PinType(input("digite o tipo do pino (a, d): "))
+                addr = int(input("digite a porta: "))
+                print(com.read_pin(pin_t,addr))
+            elif op == "2":
+                pin_t = PinType(input("digite o tipo do pino (a, d): "))
+                addr = int(input("digite a porta: "))
+                escr = int(input("digite o valor: "))
+                com.write_pin(pin_t,addr,escr)
+            elif op == "0":
+                break
+        except Exception as e:
+            print(e.args)
+        pass
 
     # print(ComunicadorSerial.build_message(OperationType.READ,PinType.ANALOG,55,15))
     # j=0

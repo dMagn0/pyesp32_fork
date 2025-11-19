@@ -63,7 +63,7 @@ class ComunicadorSerial():
         pass
     
     @staticmethod
-    def build_message(operation, pin_type, address, value = "") -> str:
+    def build_message(operation, pin_type, address, value = 0) -> str:
         """
         Build a message according to the protocol.
 
@@ -76,10 +76,11 @@ class ComunicadorSerial():
         Returns:
             Formatted message string
         """
-        if type(operation) == OperationType:
+
+        if isinstance(operation, OperationType):
             operation = operation.value
-        if type(pin_type) == PinType:
-            pin_type =pin_type.value
+        if isinstance(pin_type, PinType):
+            pin_type = pin_type.value
 
         return f"{operation}{pin_type}{address:02d}{value:07d}"
     
@@ -102,7 +103,7 @@ class ComunicadorSerial():
                 return saida
             time.sleep(0.05) 
 
-        while self._serial.in_waiting >= 0: 
+        while self._serial.in_waiting > 0: 
             try:
                 data = self._serial.readline().decode('utf-8').strip()
             except Exception as e:
