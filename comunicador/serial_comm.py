@@ -6,7 +6,7 @@ import threading
 from time import sleep
 from src.protocol_models import *
 from src.port_detect import *
-
+import sys
 BAUD_RATE = 115200 
 
 if __name__ == "__main__":
@@ -24,7 +24,19 @@ if __name__ == "__main__":
     if porta == "":
         porta = serial_p[0]
 
-    com = ComunicadorSerial(porta,BAUD_RATE)
+    if len(porta) == 1:
+        val = int(porta)
+        if val >= len(serial_p):
+            print("PORTA INVALIDA")
+            sys.exit()
+        porta = serial_p[val]
+
+    if not (porta in serial_p):
+        print("PORTA INVALIDA")
+        sys.exit()
+
+    
+    com = ComunicadorSerial(porta,BAUD_RATE, is_debug = True)
 
     while(1):
         op = input("Digite a operacao (leitura = 1, escrita = 2): ")

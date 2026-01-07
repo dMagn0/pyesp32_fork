@@ -32,9 +32,10 @@ class ComunicadorSerial():
     _read_timeout = 1 #em segundos
     _read_retrys = 3#vezes que o comunicador reenvia requisição de leitura
 
-    def __init__(self, port, baud_rate):
+    def __init__(self, port, baud_rate, is_debug = False):
         self._serial = serial.Serial(port, baud_rate, timeout=1)
         self._com_lock = threading.Lock()
+        self._is_debug = is_debug
         pass
 
     @staticmethod   
@@ -97,6 +98,9 @@ class ComunicadorSerial():
         start = time.time()
         saida = []
 
+        if self._is_debug:
+            print(f"LEITURA SERIAL: ser in waiting = {self._serial.in_waiting}")
+
         while self._serial.in_waiting <= 0:
             if time.time() - start > ComunicadorSerial._read_timeout:
                 print("Erro de leitura: timeout")
@@ -104,13 +108,18 @@ class ComunicadorSerial():
             time.sleep(0.05) 
 
         while self._serial.in_waiting > 0: 
+            if time.time() - start > ComunicadorSerial._read_timeout:
+                print("Erro de leitura: timeout com serial cheio")
+                return saida
             try:
                 data = self._serial.readline().decode('utf-8').strip()
             except Exception as e:
                 print(f"Erro de leitura: {e.args}")
                 return saida
             saida.append(data)
-            
+        
+        if self._is_debug:
+            print(saida)
         return saida
 
     def _send_message(self, mensagem) -> bool:
