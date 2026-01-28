@@ -56,7 +56,9 @@ class InterfaceBase(BoxLayout):
         if self._comunicador:
             self._loop_ativo = False
             self._comunicador.desconectar()
-    pass
+    
+    def atualizar_portas(self):
+        self.ids.spinner_port.values = serial_ports()
 
     def inicia_loop(self):
         if self._loop_ativo:
