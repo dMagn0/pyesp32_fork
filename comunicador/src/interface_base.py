@@ -73,9 +73,9 @@ class InterfaceBase(BoxLayout):
 
     def atualizacao(self):
         while self._loop_ativo:
-            self.leitura_dados()
-            self.tratamento_dados()
-            self.atualiza_dados()
+            # self.leitura_dados()
+            # self.tratamento_dados()
+            # self.atualiza_dados()
             time.sleep(0.1)
         pass
 
@@ -104,17 +104,20 @@ class InterfaceBase(BoxLayout):
         if not self._comunicador:
             print("serial desligado")
             return
-        self._comunicador.read_pin(PinType(self.ids.spinner_pin_type.text),self.ids.spinner_address.text)
-        # self.ids.leitura_manual.ids.label_read_value.text = f"{self.ids.leitura_manual.ids.pin_type_leitura.text} ,{self.ids.leitura_manual.ids.address_leitura.text}"
-        # return
+        try:
+            self.ids.leitura_manual.ids.label_read_value.text = self._comunicador.read_pin(PinType(self.ids.leitura_manual.ids.pin_type_leitura.text),int(self.ids.leitura_manual.ids.address_leitura.text))
+        except Exception as e:
+            pass
     def escrita_manual(self):
         if not self._comunicador:
             print("serial desligado")
             return
-        # print(self.ids.escrita_manual.ids.spinner_pin_type.text,self.ids.escrita_manual.ids.spinner_address.text, self.ids.escrita_manual.ids.input_value.text)
-        self._comunicador.write_pin(PinType(self.ids.escrita_manual.ids.spinner_pin_type.text),
-                                    self.ids.escrita_manual.ids.spinner_address.text,
-                                    self.ids.escrita_manual.ids.input_value.text)
+        try:
+            self._comunicador.write_pin(PinType(self.ids.escrita_manual.ids.spinner_pin_type.text),
+                                    int(self.ids.escrita_manual.ids.spinner_address.text),
+                                    int(self.ids.escrita_manual.ids.input_value.text))
+        except Exception as e:
+            pass
     pass
 
 class FixedReadWidget(BoxLayout):

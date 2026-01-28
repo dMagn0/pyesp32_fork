@@ -32,7 +32,7 @@ class ComunicadorSerial():
     _com_lock:threading.Lock
 
     _read_timeout = 1 #em segundos
-    _read_retrys = 20#vezes que o comunicador reenvia requisição de leitura
+    _read_retrys = 5#vezes que o comunicador reenvia requisição de leitura
 
     def __init__(self, port, baud_rate, is_debug = False):
         self._serial = serial.Serial(port, baud_rate, timeout=ComunicadorSerial._read_timeout)
@@ -102,7 +102,6 @@ class ComunicadorSerial():
         Returns:
             Formatted message string
         """
-
         if isinstance(operation, OperationType):
             operation = operation.value
         if isinstance(pin_type, PinType):
@@ -152,6 +151,7 @@ class ComunicadorSerial():
         """
 
         try:
+            if self._is_debug: print("send:", mensagem)
             self._serial.write(mensagem.encode('utf-8'))
             return
         except Exception as e:
@@ -175,11 +175,18 @@ class ComunicadorSerial():
         """
         leitura = ""
 
+        with self._com_lock:
+            self._send_message(ComunicadorSerial.build_message(OperationType.READ,pin_type,address))
         for i in range(0, ComunicadorSerial._read_retrys):
             try:
                 with self._com_lock:
-                    self._send_message(ComunicadorSerial.build_message(OperationType.READ,pin_type,address))
+                    # self._send_message(ComunicadorSerial.build_message(OperationType.READ,pin_type,address))
                     leitura = self._read_serial()
+                while leitura[0] != 'r' or leitura[0] != 'w':
+                    print(leitura)
+                    with self._com_lock:
+                        leitura = self._read_serial()
+                    continue
                 msg = ComunicadorSerial.parse_message(leitura)
                 if msg["operation"] == OperationType.READ.value and msg["address"] == address:
                     return msg
