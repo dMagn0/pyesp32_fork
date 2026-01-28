@@ -16,9 +16,6 @@ if __name__ == "__main__":
         sys.exit()
         
     print("Portas disponíveis: \n   ",serial_p)
-
-    # Replace '/dev/ttyUSB0' with your ESP32's serial port
-    #ser = serial.Serial("/dev/ttyUSB0", 115200, timeout=1)
     
     porta = input("Digite a porta de comunicacao serial ("" para a primeira): ")
     if porta == "":
@@ -42,7 +39,7 @@ if __name__ == "__main__":
         op = input("Digite a operacao (leitura = 1, escrita = 2): ")
         try:
             if op == "1":
-                pin_t = PinType(input("digite o tipo do pino (a, d): "))
+                pin_t = PinType(input("digite o tipo do pino (a, d, c, t): "))
                 addr = int(input("digite a porta: "))
                 print(com.read_pin(pin_t,addr))
             elif op == "2":

@@ -23,6 +23,8 @@ class OperationType(Enum):
 class PinType(Enum):
     ANALOG = "a"
     DIGITAL = "d"
+    CORRENTE = "c"
+    TEMPERATURA = "t"
     pass
 
 class ComunicadorSerial():
@@ -33,7 +35,7 @@ class ComunicadorSerial():
     _read_retrys = 3#vezes que o comunicador reenvia requisição de leitura
 
     def __init__(self, port, baud_rate, is_debug = False):
-        self._serial = serial.Serial(port, baud_rate, timeout=1)
+        self._serial = serial.Serial(port, baud_rate, timeout=ComunicadorSerial._read_timeout)
         self._com_lock = threading.Lock()
         self._is_debug = is_debug
         pass
@@ -85,42 +87,28 @@ class ComunicadorSerial():
 
         return f"{operation}{pin_type}{address:02d}{value:07d}"
     
-    def _read_serial(self) -> list:
+    def _read_serial(self) -> str:
         """
-        Tenta fazer leitura da porta serial. Retorna Erro se não houver leitura em 5 segundos.
+        Faz leitura da porta serial até o próximo '\n'.
 
         Returns:
-            lista: retorna a leitura da porta serial em formato [{"operation":,"type":,"address":,"value":},...]
+            string: retorna a leitura da porta serial
+
+        Raises:
+            ValueError, TimeoutError
         }
         """
-
-        data = ""
-        start = time.time()
-        saida = []
-
-        if self._is_debug:
-            print(f"LEITURA SERIAL: ser in waiting = {self._serial.in_waiting}")
-
-        while self._serial.in_waiting <= 0:
-            if time.time() - start > ComunicadorSerial._read_timeout:
-                print("Erro de leitura: timeout")
-                return saida
-            time.sleep(0.05) 
-
-        while self._serial.in_waiting > 0: 
-            if time.time() - start > ComunicadorSerial._read_timeout:
-                print("Erro de leitura: timeout com serial cheio")
-                return saida
-            try:
-                data = self._serial.readline().decode('utf-8').strip()
-            except Exception as e:
-                print(f"Erro de leitura: {e.args}")
-                return saida
-            saida.append(data)
+        data = self._serial.readline()
         
-        if self._is_debug:
-            print(saida)
-        return saida
+        if not data:
+            raise TimeoutError("Timeout aguardando resposta da serial")
+
+        try:
+            return data.decode("utf-8").strip()
+        except UnicodeDecodeError as exc:
+            raise ValueError("Erro de decodificação da serial") from exc
+        pass
+
 
     def _send_message(self, mensagem) -> bool:
         """
@@ -142,32 +130,37 @@ class ComunicadorSerial():
         pass
 
     def read_pin(self, pin_type:PinType, address) -> dict:
-        leitura = []
-        retorno = {}
+        """
+        Envia um comando de leitura para o pino especificado e aguarda a
+        resposta correspondente do dispositivo via comunicação serial.
+
+        Args:
+            pin_type (PinType): Tipo do pino a ser lido.
+            address: Endereço do pino no dispositivo.
+
+        Returns:
+            dict: Dicionário no modelo {"operation":,"type":,"address":,"value":}.
+
+        Raises:
+            TimeoutError
+        """
+        leitura = ""
 
         for i in range(0, ComunicadorSerial._read_retrys):
-            with self._com_lock:
-                if self._serial.in_waiting:
-                    _ = self._read_serial()
-                self._send_message(ComunicadorSerial.build_message(OperationType.READ,pin_type,address))    
-            
-            with self._com_lock:
-                leitura = self._read_serial()
-
-            for i in leitura:
-                msg = ComunicadorSerial.parse_message(i)
+            try:
+                with self._com_lock:
+                    self._serial.reset_input_buffer()
+                    self._send_message(ComunicadorSerial.build_message(OperationType.READ,pin_type,address))    
+                    leitura = self._read_serial()
+                msg = ComunicadorSerial.parse_message(leitura)
                 if msg["operation"] == OperationType.READ.value and msg["address"] == address:
-                    retorno = msg
-                    pass
-                pass
-
-            if len(retorno) != 0:
-                return retorno
-                break
+                    return msg
+                    
+            except Exception as e:
+                print("Erro: ", e)
             pass
 
-        print("Erro de leitura: resposta nao encontrada")
-        return {}
+        raise TimeoutError("Tentativas de leitura sem sucesso")
     
     def write_pin(self, pin_type:PinType, address,value):
         with self._com_lock:
