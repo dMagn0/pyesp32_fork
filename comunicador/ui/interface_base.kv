@@ -1,0 +1,192 @@
+#:kivy 2.2.1
+
+<InterfaceBase>:
+    orientation: "vertical"
+    padding: 10
+    spacing: 10
+
+    BoxLayout:
+        orientation: "horizontal"
+        spacing: 10
+        size_hint_y: 0.32
+
+        BoxLayout:
+            orientation: "vertical"
+            spacing: 10
+            padding: 5
+            size_hint_x: 0.3
+
+            Spinner:
+                id: spinner_port
+                text: "Porta USB"
+                values: []
+
+            Spinner:
+                id: spinner_baud
+                text: "Baud Rate"
+                values: ["9600", "19200", "38400", "57600", "115200"]
+
+            BoxLayout:
+                orientation: "horizontal"
+                spacing: 10
+                size_hint_y: 0.75
+                Button:
+                    text: "Conectar"
+                    on_release:
+                        root.conectar()
+
+                Button:
+                    text: "Desconectar"
+                    on_release: 
+                        root.desconectar()
+
+
+    
+        EscritaManualWidget:
+            id:escrita_manual
+            size_hint_x: 0.35
+        LeituraManualWidget:
+            id: leitura_manual
+            size_hint_x: 0.35
+
+    ScrollView:
+        size_hint_y: 0.6
+        do_scroll_x: False
+        do_scroll_y: True
+
+        GridLayout:
+            id: addrs_grid
+            cols: 2
+            spacing: 8
+            padding: 5
+
+            size_hint_y: None
+            row_default_height: "50dp"
+            row_force_default: True
+            height: self.minimum_height
+
+
+    
+
+
+<EscritaManualWidget@BoxLayout>:
+    orientation: "vertical"
+    spacing: 10
+
+    Label:
+        text: "Escrita manual"
+        size_hint: (1,0.25)
+        bold: True
+
+    GridLayout:
+        cols: 2
+        spacing: 10
+
+        Label:
+            text: "Tipo do pino:"
+        Spinner:
+            id: spinner_pin_type
+            text: "Digital"
+            values: ["d", "a", "c", "t"]
+
+        Label:
+            text: "Endereço:"
+        Spinner:
+            id: spinner_address
+            text: "00"
+            values: [f"{i:02d}" for i in range(0, 100)]
+
+        Label:
+            text: "Valor:"
+        TextInput:
+            id: input_value
+            multiline: False
+            hint_text: "0 a 9999999"
+            input_filter: "int"
+
+    Button:
+        text: "Enviar escrita"
+        size_hint: (1,0.25)
+
+        on_release: app.root.escrita_manual()
+
+<LeituraManualWidget@BoxLayout>:
+    orientation: "vertical"
+    spacing: 10
+
+    Label:
+        text: "Leitura manual"
+        size_hint: (1, 0.25)
+        bold: True
+
+    GridLayout:
+        cols: 2
+        spacing: 10
+
+        Label:
+            text: "Tipo do pino:"
+        Spinner:
+            id: pin_type_leitura
+            text: "d"
+            values: ["d", "a", "c", "t"]
+
+        Label:
+            text: "Endereço:"
+        Spinner:
+            id: address_leitura
+            text: "00"
+            values: [f"{i:02d}" for i in range(0, 100)]
+        Label:
+            text: "Valor lido:"
+            size_hint_x: 0.4
+        Label:
+            id: label_read_value
+            text: "---"
+            size_hint_x: 0.6
+
+    Button:
+        text: "Enviar leitura"
+        size_hint: (1, 0.25)
+        on_release: app.root.leitura_manual()
+    
+<FixedReadWidget@BoxLayout>:
+    orientation: "horizontal"
+    spacing: 5
+    padding: [5, 0, 5, 0]
+
+    Label:
+        text: "Addr:"
+        size_hint_x: 0.2
+        halign: "right"
+        valign: "middle"
+        text_size: self.size
+
+    Label:
+        id: lbl_address
+        text: "00"
+        size_hint_x: 0.15
+        halign: "left"
+        valign: "middle"
+        text_size: self.size
+        bold: True
+
+    Label:
+        text: "Valor:"
+        size_hint_x: 0.25
+        halign: "right"
+        valign: "middle"
+        text_size: self.size
+
+    Label:
+        id: lbl_value
+        text: "---"
+        size_hint_x: 0.2
+        halign: "left"
+        valign: "middle"
+        text_size: self.size
+        bold: True
+
+    Widget:
+        size_hint_x: 0.3
+
+

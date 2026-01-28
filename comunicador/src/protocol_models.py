@@ -40,6 +40,28 @@ class ComunicadorSerial():
         self._is_debug = is_debug
         pass
 
+    def conectar(self):
+        """
+        Abre a porta serial.
+        Se port/baud_rate forem informados, recria a conexão.
+        """
+        with self._com_lock:
+            if self._serial and self._serial.is_open:
+                return  
+            self._serial.open()
+            if self._is_debug:
+                print("Serial conectada")
+
+    def desconectar(self):
+        """
+        Fecha a porta serial com segurança.
+        """
+        with self._com_lock:
+            if self._serial and self._serial.is_open:
+                self._serial.close()
+                if self._is_debug:
+                    print("Serial desconectada")
+
     @staticmethod   
     def parse_message(msg) -> dict:
         """
