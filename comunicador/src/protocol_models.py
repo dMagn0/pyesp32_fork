@@ -32,12 +32,13 @@ class ComunicadorSerial():
     _com_lock:threading.Lock
 
     _read_timeout = 1 #em segundos
-    _read_retrys = 3#vezes que o comunicador reenvia requisição de leitura
+    _read_retrys = 20#vezes que o comunicador reenvia requisição de leitura
 
     def __init__(self, port, baud_rate, is_debug = False):
         self._serial = serial.Serial(port, baud_rate, timeout=ComunicadorSerial._read_timeout)
         self._com_lock = threading.Lock()
         self._is_debug = is_debug
+        # self._clear_serial()
         pass
 
     def conectar(self):
@@ -83,8 +84,8 @@ class ComunicadorSerial():
                 "address": int(msg[2:4]),
                 "value": int(msg[4:11]),
             }
-        except (ValueError, IndexError):
-            return None
+        except Exception as e:
+            raise Exception(f"Erro no parse da mensagem: {msg}") from e
         pass
     
     @staticmethod
@@ -131,6 +132,13 @@ class ComunicadorSerial():
             raise ValueError("Erro de decodificação da serial") from exc
         pass
 
+    def _clear_serial(self):
+        print(self._serial.in_waiting)
+        with self._com_lock:
+            while self._serial.in_waiting > 0:
+                data = self._serial.read(self._serial.in_waiting)
+                print(self._serial.in_waiting, data)
+        pass
 
     def _send_message(self, mensagem) -> bool:
         """
@@ -145,10 +153,9 @@ class ComunicadorSerial():
 
         try:
             self._serial.write(mensagem.encode('utf-8'))
-            return True
+            return
         except Exception as e:
-            print(f"Erro de escrita: {e.args}")
-            return False
+            raise Exception(f"Erro de escrita da mensagen {mensagem}: {e}") from e
         pass
 
     def read_pin(self, pin_type:PinType, address) -> dict:
@@ -171,8 +178,7 @@ class ComunicadorSerial():
         for i in range(0, ComunicadorSerial._read_retrys):
             try:
                 with self._com_lock:
-                    self._serial.reset_input_buffer()
-                    self._send_message(ComunicadorSerial.build_message(OperationType.READ,pin_type,address))    
+                    self._send_message(ComunicadorSerial.build_message(OperationType.READ,pin_type,address))
                     leitura = self._read_serial()
                 msg = ComunicadorSerial.parse_message(leitura)
                 if msg["operation"] == OperationType.READ.value and msg["address"] == address:

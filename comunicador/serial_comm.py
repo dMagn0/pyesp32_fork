@@ -27,12 +27,12 @@ class BasicApp(App):
         Método para construção do aplicativo com base no widget criado
         """
         self._widget = InterfaceBase(addrs = [
-            {'addr':4, 'tipo': PinType.DIGITAL, 'nome': "botao 1:"},
-            {'addr':17, 'tipo': PinType.DIGITAL, 'nome': "botao 2:"},
-            {'addr':19, 'tipo': PinType.DIGITAL, 'nome': "botao 3:"},
-            {'addr':23, 'tipo': PinType.ANALOG, 'nome': "alguma coisa"},
+            {'addr':1, 'tipo': PinType.DIGITAL, 'nome': "botao 1:"},
+            {'addr':2, 'tipo': PinType.DIGITAL, 'nome': "botao 2:"},
+            {'addr':3, 'tipo': PinType.DIGITAL, 'nome': "botao 3:"},
+            {'addr':1, 'tipo': PinType.ANALOG, 'nome': "corrente"},
             {'addr':0, 'tipo': PinType.TEMPERATURA, 'nome': "temperatura:"},
-            {'addr':0, 'tipo': PinType.CORRENTE, 'nome': "corrente:"},
+            # {'addr':0, 'tipo': PinType.CORRENTE, 'nome': "corrente:"},
         ])
         return self._widget
     

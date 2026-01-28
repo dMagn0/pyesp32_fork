@@ -82,21 +82,35 @@ class InterfaceBase(BoxLayout):
     def leitura_dados(self):
         for i in self.tags:
             # i["leitura"] = random.randint(0,10)
-            i["leitura"] = self._comunicador.read_pin(i.get("tipo",PinType.DIGITAL),i.get("addr",0))
+            try:
+                i["leitura"] = self._comunicador.read_pin(i.get("tipo",PinType.DIGITAL),i.get("addr",0))
+            except TimeoutError as e:
+                print(f"Erro na leitura do {i['nome']}")
+
         pass
     def tratamento_dados(self):
+        if self.tags[0]["leitura"] == 0:
+            self._comunicador.write_pin(PinType.DIGITAL,4,1)
+        elif self.tags[1]["leitura"] == 0:
+            self._comunicador.write_pin(PinType.DIGITAL,4,10)
+        elif self.tags[2]["leitura"] == 0:
+            self._comunicador.write_pin(PinType.DIGITAL,4,100)
         pass
     def atualiza_dados(self):
         for tag in self.tags:
             tag["widget"].ids.lbl_value.text = str(tag.get("leitura",0))
         pass
     def leitura_manual(self):
-        # if not self._comunicador:
-        #     return
+        if not self._comunicador:
+            print("serial desligado")
+            return
         self._comunicador.read_pin(PinType(self.ids.spinner_pin_type.text),self.ids.spinner_address.text)
         # self.ids.leitura_manual.ids.label_read_value.text = f"{self.ids.leitura_manual.ids.pin_type_leitura.text} ,{self.ids.leitura_manual.ids.address_leitura.text}"
         # return
     def escrita_manual(self):
+        if not self._comunicador:
+            print("serial desligado")
+            return
         # print(self.ids.escrita_manual.ids.spinner_pin_type.text,self.ids.escrita_manual.ids.spinner_address.text, self.ids.escrita_manual.ids.input_value.text)
         self._comunicador.write_pin(PinType(self.ids.escrita_manual.ids.spinner_pin_type.text),
                                     self.ids.escrita_manual.ids.spinner_address.text,
